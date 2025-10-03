@@ -7,56 +7,91 @@
 <style>
 html { height:100% }
 body { height:100%; margin:0; padding:0 }
-#map_canvas { height:50vh; width:50% }
+.map_canvas { height:50vh; width:70%; margin-bottom:20px; }
 </style>
-<script
-src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDtfz0a_ytIAG97tuhiGLKbCdasxfJOQSc"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDtfz0a_ytIAG97tuhiGLKbCdasxfJOQSc"></script>
 <script>
 function initialize() {
-var latlng = new google.maps.LatLng(35.306840, -80.732000);
-var myOptions = {
+var latlng1 = new google.maps.LatLng(35.306840, -80.732000);
+var myOptions1 = {
 zoom:16,
-center:latlng,
-mapTypeId:google.maps.MapTypeId.HYBRID };
-new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+center:latlng1,
+mapTypeId:google.maps.MapTypeId.HYBRID
+};
+new google.maps.Map(document.getElementById("map_canvas1"), myOptions1)
+var latlng2 = new google.maps.LatLng(36.099651661954844, -79.26819526814776);
+var myOptions2 = {
+zoom:17,
+center:latlng2,
+mapTypeId:google.maps.MapTypeId.HYBRID
+};
+new google.maps.Map(document.getElementById("map_canvas2"), myOptions2);
+var latlng3 = new google.maps.LatLng(35.22569923403693, -80.85273410648205);
+var myOptions3 = {
+zoom:16,
+center:latlng3,
+mapTypeId:google.maps.MapTypeId.HYBRID
+};
+new google.maps.Map(document.getElementById("map_canvas3"), myOptions3);
+var latlng4 = new google.maps.LatLng(35.35192331249856, -80.6834393937129);
+var myOptions4 = {
+zoom:15,
+center:latlng4,
+mapTypeId:google.maps.MapTypeId.HYBRID
+};
+new google.maps.Map(document.getElementById("map_canvas4"), myOptions4);
+var latlng5 = new google.maps.LatLng(34.696721256965986, -76.70772335632056);
+var myOptions5 = {
+zoom:16,
+center:latlng5,
+mapTypeId:google.maps.MapTypeId.HYBRID
+};
+new google.maps.Map(document.getElementById("map_canvas5"), myOptions5);
+var latlng6 = new google.maps.LatLng(51.48164443723515, -0.19087333093680547);
+var myOptions6 = {
+zoom:17,
+center:latlng6,
+mapTypeId:google.maps.MapTypeId.HYBRID
+};
+new google.maps.Map(document.getElementById("map_canvas6"), myOptions6);
 }
 </script>
 </head>
 <body onload="initialize()">
 <h1>Lab 2 for Web GIS</h1>
 <h3>Name: Griffin Auditori</h3>
-<!-- Comments-->
+<!-- Comments -->
 <h3>Current Date is:</h3>
-<script type="text/javascript">
-document.write(Date());
-</script>
+<script type="text/javascript">document.write(Date());</script>
 <h3>Generate a random number:</h3>
-<script type="text/javascript">
-document.write(Math.random());
-</script>
+<script type="text/javascript">document.write(Math.random());</script>
 <h3>Define variables and perform calculation:</h3>
 <script>
 var str1 = "Hello World";
-document.write(str1);
-document.write("<br>");
-var x = 5;
-var y = 10;
-var z = x + y;
-document.write("x + y = " + z);
-document.write("<br><br>");
+document.write(str1 + "<br>");
+var x = 5, y = 10, z = x + y;
+document.write("x + y = " + z + "<br><br>");
 </script>
-<h3>Define a function (sum of three numbers):</h3>
+<h3>Define a function (multiplication of three numbers):</h3>
 <script>
 function sum3(x1, x2, x3) {
-var sum = x1 + x2 + x3;
-return sum;
+  return x1 * x2 * x3;
 }
-var k = sum3(5, 6, 7);
-document.write("sum3(5, 6, 7) = " + k);
-document.write("<br>");
-document.write("sum3(10, 20, 30) = " + sum3(10, 20, 30));
+document.write("multiply3(15, 20, 30) = " + sum3(15, 20, 30) + "<br>");
+document.write("multiply3(100, 200, 300) = " + sum3(100, 200, 300));
 </script>
 <h3>Interactive Map (Google Maps)</h3>
-<div id="map_canvas" style="width:70%; height:70%"></div>
+<div id="map_canvas1" class="map_canvas"></div>
+<h3>Interactive Map of Mebane, North Carolina</h3>
+<div id="map_canvas2" class="map_canvas"></div>
+<h3>Interactive Map of Bank of America Stadium</h3>
+<div id="map_canvas3" class="map_canvas"></div>
+<h3>Interactive Map of Charlotte Motor Speedway</h3>
+<div id="map_canvas4" class="map_canvas"></div>
+<h3>Interactive Map of Atlantic Beach, North Carolina</h3>
+<div id="map_canvas5" class="map_canvas"></div>
+<h3>Interactive Map of Stamford Bridge in London, England</h3>
+<div id="map_canvas6" class="map_canvas"></div>
+
 </body>
 </html>
