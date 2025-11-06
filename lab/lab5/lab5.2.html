@@ -1,1 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leaflet Map Switcher with Elevation</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+    #map {
+      height: 90%;
+      width: 100%;
+    }
+    #controls {
+      padding: 10px;
+      background: #f0f0f0;
+      border-bottom: 1px solid #ccc;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <div>
+      <strong>Basemap:</strong>
+      <label><input type="radio" name="basemap" value="osm" checked> OSM</label>
+      <label><input type="radio" name="basemap" value="esri"> ESRI Imagery</label>
+    </div>
+    <div>
+      <label><input type="checkbox" id="wmsToggle"> Show WMS Layer</label>
+    </div>
+    <div>
+      <label><input type="checkbox" id="elevationToggle"> Show Elevation Layer</label>
+    </div>
+  </div>
+  <div id="map"></div>
 
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    // Initialize map centered on the continental US
+    const map = L.map('map').setView([39.833333, -98.583333], 4);
+
+    // Define basemaps
+    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const esriLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19,
+      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, USGS, NOAA'
+    });
+
+    // Define WMS layer
+    const wmsLayer = L.tileLayer.wms('https://ahocevar.com/geoserver/wms', {
+      layers: 'topp:states',
+      format: 'image/png',
+      transparent: true,
+      attribution: 'GeoServer WMS'
+    });
+
+    // Define Elevation layer (using OpenTopoMap as an example)
+    const elevationLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+      maxZoom: 17,
+      attribution: 'Map data: &copy; OpenStreetMap contributors, SRTM | Map style: &copy; OpenTopoMap'
+    });
+
+    // Basemap switcher functionality
+    const basemapRadios = document.querySelectorAll('input[name="basemap"]');
+    basemapRadios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        if (radio.value === 'osm') {
+          if (map.hasLayer(esriLayer)) map.removeLayer(esriLayer);
+          if (!map.hasLayer(osmLayer)) map.addLayer(osmLayer);
+        } else if (radio.value === 'esri') {
+          if (map.hasLayer(osmLayer)) map.removeLayer(osmLayer);
+          if (!map.hasLayer(esriLayer)) map.addLayer(esriLayer);
+        }
+      });
+    });
+
+    // WMS toggle functionality
+    const wmsToggle = document.getElementById('wmsToggle');
+    wmsToggle.addEventListener('change', () => {
+      if (wmsToggle.checked) {
+        map.addLayer(wmsLayer);
+      } else {
+        map.removeLayer(wmsLayer);
+      }
+    });
+
+    // Elevation toggle functionality
+    const elevationToggle = document.getElementById('elevationToggle');
+    elevationToggle.addEventListener('change', () => {
+      if (elevationToggle.checked) {
+        map.addLayer(elevationLayer);
+      } else {
+        map.removeLayer(elevationLayer);
+      }
+    });
+  </script>
+</body>
+</html>
