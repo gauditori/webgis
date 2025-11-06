@@ -3,251 +3,92 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OpenLayers Basemap Switcher with WMS Layer</title>
-  <!-- Use the UMD build from jsDelivr (dist) so `ol` is available as a global. -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.css" />
+  <title>OpenLayers Map Switcher</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css" />
   <style>
-    html, body { height: 100%; margin: 0; }
-    #map {
-      width: 100%;
-      height: 100vh; /* fill the viewport */
-    }
-    .controls {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background: rgba(255, 255, 255, 0.95);
-      padding: 10px;
-      border-radius: 6px;
-      box-shadow: 0 1px 6px rgba(0,0,0,0.25);
+    body {
+      margin: 0;
       font-family: Arial, sans-serif;
-      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    #controls {
+      background: #f8f8f8;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      border-bottom: 1px solid #ddd;
+    }
+    #map {
+      flex: 1;
+      width: 100%;
     }
   </style>
 </head>
 <body>
-  <div class="controls">
-    <div style="margin-bottom:8px;">
-      <strong>Basemap</strong><br>
-      <label><input type="radio" name="basemap" value="osm" checked> OSM Basemap</label><br>
-      <label><input type="radio" name="basemap" value="esri"> ESRI Imagery</label>
-    </div>
-    <div>
-      <label><input type="checkbox" id="wmsToggle" checked> WMS Layer (topp:states)</label>
-    </div>
+  <div id="controls">
+    <strong>Base Map:</strong>
+    <label><input type="radio" name="basemap" value="osm" checked> OSM</label>
+    <label><input type="radio" name="basemap" value="esri"> ESRI Imagery</label>
+    <label><input type="checkbox" id="wmsToggle" checked> Show WMS Layer</label>
   </div>
 
   <div id="map"></div>
 
-  <!-- Load the OpenLayers UMD build from the dist folder so `ol` is defined globally -->
   <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
-
   <script>
-    // Wrap initialization to ensure both the OpenLayers script and the DOM are ready.
-    document.addEventListener('DOMContentLoaded', () => {
-      if (typeof ol === 'undefined') {
-        console.error('OpenLayers (ol) is not defined. Check the CDN path.');
-        alert('OpenLayers failed to load. See console for details.');
-        return;
-      }
-
-      // Base layers
-      const osmLayer = new ol.layer.Tile({
-        source: new ol.source.OSM(),
-        visible: true
-      });
-
-      const esriLayer = new ol.layer.Tile({
-        source: new ol.source.XYZ({
-          // Use Esri World Imagery tiles
-          url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-        }),
-        visible: false
-      });
-
-      // WMS Layer (topp:states)
-      const wmsLayer = new ol.layer.Tile({
-        source: new ol.source.TileWMS({
-          url: 'https://ahocevar.com/geoserver/wms',
-          params: {
-            'LAYERS': 'topp:states',
-            'TILED': true,
-            'FORMAT': 'image/png'
-          },
-          serverType: 'geoserver',
-          // Provide a crossOrigin so tiles can be fetched in most hosts
-          crossOrigin: 'anonymous'
-        }),
-        visible: true
-      });
-
-      // Build map options; only set controls if ol.control.defaults exists and is a function
-      const mapOptions = {
-        target: 'map',
-        layers: [osmLayer, esriLayer, wmsLayer],
-        view: new ol.View({
-          center: ol.proj.fromLonLat([-98.5795, 39.8283]), // continental US
-          zoom: 4
-        })
-      };
-
-      if (ol.control && typeof ol.control.defaults === 'function') {
-        // Some OL builds expose ol.control.defaults(); others don't. Guard the call.
-        try {
-          mapOptions.controls = ol.control.defaults();
-        } catch (err) {
-          console.warn('ol.control.defaults() threw an error; falling back to default controls.', err);
-        }
-      } else {
-        // Don't set controls explicitly - OpenLayers will use its defaults when not provided.
-        console.info('ol.control.defaults() not available; letting OpenLayers apply default controls.');
-      }
-
-      // Map initialization - center on the continental US
-      const map = new ol.Map(mapOptions);
-
-      // Basemap switcher (radio buttons)
-      document.querySelectorAll('input[name="basemap"]').forEach(radio => {
-        radio.addEventListener('change', (event) => {
-          const value = event.target.value;
-          osmLayer.setVisible(value === 'osm');
-          esriLayer.setVisible(value === 'esri');
-        });
-      });
-
-      // WMS layer toggle (checkbox)
-      const wmsToggle = document.getElementById('wmsToggle');
-      wmsToggle.addEventListener('change', (event) => {
-        wmsLayer.setVisible(event.target.checked);
-      });
-
-      // Helpful debug info in console
-      console.log('Map initialized. ol.VERSION (if available):', (ol && ol.VERSION) ? ol.VERSION : 'unknown');
+    // Define OSM and ESRI basemaps
+    const osmLayer = new ol.layer.Tile({
+      source: new ol.source.OSM(),
+      visible: true
     });
-  </script>
-</body>
-</html>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Leaflet Basemap Switcher with WMS Layer</title>
-  <!-- Leaflet CSS (stable) -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <style>
-    html, body { height: 100%; margin: 0; }
-    #map { width: 100%; height: 100vh; }
-    .controls {
-      position: absolute;
-      top: 10px; right: 10px;
-      background: rgba(255,255,255,0.95);
-      padding: 10px; border-radius: 6px; box-shadow: 0 1px 6px rgba(0,0,0,0.25);
-      font-family: Arial, sans-serif; z-index: 1000;
-    }
-  </style>
-</head>
-<body>
-  <div class="controls">
-    <div style="margin-bottom:8px;"><strong>Basemap</strong><br>
-      <label><input type="radio" name="basemap" value="osm" checked> OSM Basemap</label><br>
-      <label><input type="radio" name="basemap" value="esri"> ESRI Imagery</label>
-    </div>
-    <div>
-      <label><input type="checkbox" id="wmsToggle" checked> WMS Layer (topp:states)</label>
-    </div>
-  </div>
+    const esriLayer = new ol.layer.Tile({
+      source: new ol.source.XYZ({
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+      }),
+      visible: false
+    });
 
-  <div id="map"></div>
+    // Define WMS Layer
+    const wmsLayer = new ol.layer.Tile({
+      source: new ol.source.TileWMS({
+        url: 'https://ahocevar.com/geoserver/wms',
+        params: {
+          'LAYERS': 'topp:states',
+          'TILED': true
+        },
+        serverType: 'geoserver',
+        crossOrigin: 'anonymous'
+      }),
+      visible: true
+    });
 
-  <!-- Dynamically load Leaflet JS, with a fallback if the first CDN fails. This ensures L is defined before we run code. -->
-  <script>
-    (function loadLeafletAndInit(){
-      const LEAFLET_URLS = [
-        'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-        'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js'
-      ];
+    // Create the map
+    const map = new ol.Map({
+      target: 'map',
+      layers: [osmLayer, esriLayer, wmsLayer],
+      view: new ol.View({
+        center: ol.proj.fromLonLat([-98.583, 39.833]), // Center on continental US
+        zoom: 4
+      })
+    });
 
-      function initApp() {
-        if (typeof L === 'undefined') {
-          console.error('Leaflet (L) is not available after loading script.');
-          alert('Leaflet failed to load. Check console for details.');
-          return;
-        }
+    // Handle base map switching
+    document.querySelectorAll('input[name="basemap"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        const value = e.target.value;
+        osmLayer.setVisible(value === 'osm');
+        esriLayer.setVisible(value === 'esri');
+      });
+    });
 
-        // Base layers
-        const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19,
-          attribution: '&copy; OpenStreetMap contributors'
-        });
-
-        const esriLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-          maxZoom: 19,
-          attribution: '&copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye'
-        });
-
-        // WMS Layer
-        const wmsLayer = L.tileLayer.wms('https://ahocevar.com/geoserver/wms', {
-          layers: 'topp:states',
-          format: 'image/png',
-          transparent: true,
-          attribution: 'GeoServer'
-        });
-
-        // Initialize the map centered on continental US
-        const map = L.map('map', {
-          center: [39.8283, -98.5795],
-          zoom: 4,
-          layers: [osmLayer, wmsLayer] // OSM default + WMS on
-        });
-
-        // Basemap switcher
-        document.querySelectorAll('input[name="basemap"]').forEach(radio => {
-          radio.addEventListener('change', (event) => {
-            const value = event.target.value;
-            if (value === 'osm') {
-              if (!map.hasLayer(osmLayer)) map.addLayer(osmLayer);
-              if (map.hasLayer(esriLayer)) map.removeLayer(esriLayer);
-            } else if (value === 'esri') {
-              if (!map.hasLayer(esriLayer)) map.addLayer(esriLayer);
-              if (map.hasLayer(osmLayer)) map.removeLayer(osmLayer);
-            }
-          });
-        });
-
-        // WMS layer toggle
-        document.getElementById('wmsToggle').addEventListener('change', (event) => {
-          if (event.target.checked) {
-            if (!map.hasLayer(wmsLayer)) map.addLayer(wmsLayer);
-          } else {
-            if (map.hasLayer(wmsLayer)) map.removeLayer(wmsLayer);
-          }
-        });
-
-        console.log('Leaflet map initialized successfully.');
-      }
-
-      // Try loading URLs sequentially until one succeeds
-      let idx = 0;
-      function tryLoadNext() {
-        if (idx >= LEAFLET_URLS.length) {
-          console.error('All Leaflet CDN attempts failed.');
-          alert('Unable to load Leaflet from CDN. Check network or use a local copy.');
-          return;
-        }
-        const src = LEAFLET_URLS[idx++];
-        const s = document.createElement('script');
-        s.src = src;
-        s.async = true;
-        s.onload = () => { console.log('Loaded Leaflet from', src); initApp(); };
-        s.onerror = () => { console.warn('Failed to load Leaflet from', src); tryLoadNext(); };
-        document.head.appendChild(s);
-      }
-
-      // Start loading
-      tryLoadNext();
-    })();
+    // Handle WMS layer toggle
+    document.getElementById('wmsToggle').addEventListener('change', (e) => {
+      wmsLayer.setVisible(e.target.checked);
+    });
   </script>
 </body>
 </html>
