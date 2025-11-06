@@ -1,1 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenLayers Basemap & WMS Viewer</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <!-- Load OpenLayers CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v9.2.4/ol.css">
+    <style>
+        /* Set a consistent font and basic box model */
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent body scroll bars */
+        }
+        /* Style for the map container */
+        #map {
+            width: 100%;
+            height: 100vh; /* Full viewport height */
+        }
+        /* Custom styles for the control panel */
+        .map-controls {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1000;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 1rem;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
 
+    <div id="map"></div>
+
+    <div class="map-controls flex flex-col space-y-4">
+        <!-- Basemap Switcher -->
+        <div class="p-3 bg-gray-50 rounded-lg shadow-inner">
+            <h3 class="font-bold text-lg mb-2 text-gray-800 border-b pb-1">Basemaps</h3>
+            <div class="space-y-2">
+                <label class="flex items-center text-sm font-medium text-gray-700 cursor-pointer">
+                    <input type="radio" name="basemap" value="osm" checked class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" onclick="switchBasemap('osm')">
+                    <span class="ml-2">OpenStreetMap</span>
+                </label>
+                <label class="flex items-center text-sm font-medium text-gray-700 cursor-pointer">
+                    <input type="radio" name="basemap" value="esri-imagery" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" onclick="switchBasemap('esri-imagery')">
+                    <span class="ml-2">ESRI Imagery</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- WMS Toggle -->
+        <div class="p-3 bg-gray-50 rounded-lg shadow-inner">
+            <h3 class="font-bold text-lg mb-2 text-gray-800 border-b pb-1">Data Layers</h3>
+            <label class="flex items-center text-sm font-medium text-gray-700 cursor-pointer">
+                <input type="checkbox" id="wms-toggle" checked class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" onchange="toggleWMSLayer(this.checked)">
+                <span class="ml-2">WMS: Topp States</span>
+            </label>
+            <p class="text-xs text-gray-500 mt-1">Source:ahocevar/geoserver</p>
+        </div>
+    </div>
+
+    <!-- Load OpenLayers JS (Full bundle - resolves module issues) -->
+    <script src="https://cdn.jsdelivr.net/npm/ol@v9.2.4/dist/ol.js"></script>
+
+    <!-- Map Initialization Script (uses global 'ol' object) -->
+    <script>
+        // Define necessary OpenLayers components from the globally loaded 'ol' object
+        const Map = ol.Map;
+        const View = ol.View;
+        const TileLayer = ol.layer.Tile;
+        const OSM = ol.source.OSM;
+        const XYZ = ol.source.XYZ;
+        const ImageLayer = ol.layer.Image;
+        const ImageWMS = ol.source.ImageWMS;
+        const fromLonLat = ol.proj.fromLonLat;
+
+        // --- 1. Define Layers ---
+
+        // OpenStreetMap Basemap (Default active)
+        const osmLayer = new TileLayer({
+            source: new OSM(),
+            visible: true,
+            title: 'OpenStreetMap',
+            type: 'base', // Custom property for basemap group
+        });
+
+        // ESRI World Imagery Basemap
+        const esriImageryLayer = new TileLayer({
+            source: new XYZ({
+                attributions: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA FSA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+                url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            }),
+            visible: false, // Initially hidden
+            title: 'ESRI Imagery',
+            type: 'base',
+        });
+
+        // WMS Layer (topp:states)
+        const wmsLayer = new ImageLayer({
+            source: new ImageWMS({
+                url: 'https://ahocevar.com/geoserver/wms',
+                params: {
+                    'LAYERS': 'topp:states',
+                    'FORMAT': 'image/png', // Use png for transparency
+                    'VERSION': '1.1.1',
+                    'SRS': 'EPSG:4326',
+                    // The BBOX, WIDTH, HEIGHT in the original URL are for a GetMap *request*,
+                    // but ImageWMS handles these parameters dynamically based on the current map extent.
+                },
+                // The ratio parameter controls the resolution of the WMS request.
+                ratio: 1,
+                // Setting crossOrigin is important for WMS to avoid tainted canvas issues
+                crossOrigin: 'anonymous',
+            }),
+            opacity: 0.7, // Add slight transparency
+            visible: true, // Initially visible
+            title: 'WMS Topp States',
+            type: 'overlay', // Custom property for overlay group
+        });
+
+        // --- 2. Initialize Map ---
+
+        const map = new Map({
+            target: 'map',
+            layers: [
+                esriImageryLayer, // Add ESRI first (bottom)
+                osmLayer,         // Add OSM second
+                wmsLayer          // Add WMS last (top)
+            ],
+            view: new View({
+                // Center on Continental US (around Kansas/Missouri)
+                center: fromLonLat([-98.5, 39.8]),
+                zoom: 4, // Appropriate zoom for Continental US
+                minZoom: 2,
+                maxZoom: 18,
+            }),
+        });
+
+        // Make map and layers globally accessible for control functions
+        window.map = map;
+        window.wmsLayer = wmsLayer;
+
+
+        // --- 3. Control Functions ---
+
+        /**
+         * Switches the active basemap based on the radio button selection.
+         * @param {string} selectedMapTitle - 'osm' or 'esri-imagery'
+         */
+        window.switchBasemap = (selectedMapTitle) => {
+            // map.getLayers() returns an ol.Collection of layers
+            map.getLayers().forEach(layer => {
+                // Check if the layer has the custom 'type' property set to 'base'
+                if (layer.get('type') === 'base') {
+                    // Check the layer's title property
+                    const layerTitle = layer.get('title');
+
+                    if (selectedMapTitle === 'osm' && layerTitle === 'OpenStreetMap') {
+                        layer.setVisible(true);
+                    } else if (selectedMapTitle === 'esri-imagery' && layerTitle === 'ESRI Imagery') {
+                        layer.setVisible(true);
+                    } else {
+                        // Hide all other basemaps
+                        layer.setVisible(false);
+                    }
+                }
+            });
+        };
+
+        /**
+         * Toggles the visibility of the WMS layer based on checkbox state.
+         * @param {boolean} isChecked - The state of the checkbox (true=visible, false=hidden)
+         */
+        window.toggleWMSLayer = (isChecked) => {
+            if (window.wmsLayer) {
+                window.wmsLayer.setVisible(isChecked);
+            }
+        };
+
+    </script>
+
+    <!--
+        Note on OpenLayers Layers Order:
+        Layers are drawn in the order they appear in the layers array.
+        [ESRI, OSM, WMS] means:
+        ESRI is at the bottom.
+        OSM is on top of ESRI.
+        WMS is at the very top.
+
+        The switchBasemap function ensures only one of OSM or ESRI is visible at any time.
+    -->
+
+</body>
+</html>
